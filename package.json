@@ -1,0 +1,23 @@
+{
+  "name": "cordova-plugin-clovergo",
+  "version": "1.0.0",
+  "description": "Cordova Plugin to connect to Clover Go payment device and process payments.",
+  "cordova": {
+    "id": "cordova-plugin-clovergo",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.hotwax.co/plugins/mobile-sdk/ionic/clover-go.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-ios",
+    "cordova-android"
+  ],
+  "author": "",
+  "license": "Apache 2.0"
+}

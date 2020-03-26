@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-clovergo" 
+        version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+        xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>CloverGo</name>
+
+    <description>Cordova Plugin to connect to Clover Go payment device and process payments.</description>
+    <license>Apache 2.0</license>
+    <keywords>clover, payment</keywords>
+
+    <engines>
+      <engine name="cordova" version=">=3.0.0" />
+    </engines>
+
+    <js-module name="CloverGo" src="www/CloverGo.js">
+        <clobbers target="CloverGo" />
+    </js-module>
+
+    <platform name="ios">
+        <config-file parent="/*" target="config.xml">
+            <feature name="CloverGo">
+                <param name="ios-package" value="CloverGo" />
+            </feature>
+        </config-file>
+        <source-file src="src/ios/CloverGo.m" />
+    </platform>
+
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="CloverGo">
+                <param name="android-package" value="cordova.plugin.clovergo.CloverGo" />
+            </feature>
+        </config-file>
+
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-permission android:name="android.permission.BLUETOOTH" />
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+        </config-file>
+
+        <lib-file src="src/android/roam/roamreaderunifiedapi-1.7.1.162.aar"/>
+        <framework src="src/android/build-extras.gradle" custom="true" type="gradleReference" />
+        <source-file src="src/android/CloverGo.java" target-dir="src/cordova/plugin/clovergo/CloverGo" />
+    </platform>
+
+</plugin>

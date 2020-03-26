@@ -1,0 +1,21 @@
+android {
+    defaultConfig {
+    multiDexEnabled true
+    }
+}
+repositories{
+    mavenCentral()
+    jcenter()
+    google()
+    flatDir{
+        dirs 'libs'
+    }
+}
+dependencies {
+
+  compile(name:'roamreaderunifiedapi-1.7.1.162', ext:'aar')
+
+  implementation ("com.firstdata.clovergo:remote-pay-android-go-connector:3.3.1.2@aar") {
+    transitive = true
+  }
+}

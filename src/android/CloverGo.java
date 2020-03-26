@@ -141,7 +141,7 @@ public class CloverGo extends CordovaPlugin {
             this.connect(args, callbackContext);
             return true;
         } if (action.equals("sale")) {
-            this.sale(args, callbackContext);
+            this.sale(args.getJSONObject(0), callbackContext);
             return true;
         }
         return false;
@@ -301,7 +301,16 @@ public class CloverGo extends CordovaPlugin {
 
             @Override
             public void onDeviceReady(final MerchantInfo merchantInfo) {
-                showToast("Clover Device Ready");
+                try {
+                    JSONObject resObj = new JSONObject();
+                    // TODO Remove it and handle at app level
+                    showToast("Clover Device Ready");
+                    resObj.put("type", "CLOVER_DEVICE_READY");
+                    resObj.put("message", "Clover Device Ready");
+                    sendCallback(PluginResult.Status.OK, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                }
             }
             @Override
             public void onAidMatch(final List<CardApplicationIdentifier> applicationIdentifiers, final AidSelection aidSelection) {}
@@ -353,6 +362,14 @@ public class CloverGo extends CordovaPlugin {
                         showToast(deviceErrorEvent.getErrorType().name());
                         Log.d(TAG, "**CloverGo****************************************" + deviceErrorEvent.getMessage());
                         break;
+                }
+                try {
+                    JSONObject resObj = new JSONObject();
+                    resObj.put("type", deviceErrorEvent.getErrorType().name());
+                    resObj.put("message", deviceErrorEvent.getMessage());
+                    sendCallback(PluginResult.Status.ERROR, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
                 }
             }
 
@@ -420,22 +437,40 @@ public class CloverGo extends CordovaPlugin {
     /**
     * The method initiates the sale
     */
-    private void sale(JSONArray args, CallbackContext callbackContext) {
-        if (cloverGo450Connector != null) {
-            // TODO Make it configurable
-            SaleRequest request = new SaleRequest(100L, "10000");
-            // This is required to identify the device, else when making the a sale gives reader not found error
-            request.setCardEntryMethods((Constants.CARD_ENTRY_METHOD_MANUAL | Constants.CARD_ENTRY_METHOD_ICC_CONTACT | Constants.CARD_ENTRY_METHOD_NFC_CONTACTLESS));
-            cordova.setActivityResultCallback(this);
-            cloverGo450Connector.sale(request);
-            // This is required to access device using bluetooth and accessing it's functionality
-            if (paymentTypeSelection != null) {
-                // Value of paymentTypeSelection is initialised only after initiating the sale 
-                paymentTypeSelection.selectPaymentType(ICloverGoConnector.GoPaymentType.RP450, RP450);
-            }
-            callbackContext.success(); // Thread-safe.
+    private void sale(JSONObject configObject, CallbackContext callbackContext) {
+        if (configObject.isNull("orderId") || configObject.isNull("amount")) {
+            callbackContext.error("orderId and amount is a required field for sale.");
+        } else {
+            try {    
+                String orderId = configObject.getString("orderId");
+                // TODO Handle if the parsing fails
+                long amount = Long.parseLong(configObject.getString("amount"));
             
+                // TODO Add all related fields to Sale Request
+                if (cloverGo450Connector != null) {
+                    // TODO Make it configurable
+                    SaleRequest request = new SaleRequest(amount, orderId);
+                    // This is required to identify the device, else when making the a sale gives reader not found error
+                    request.setCardEntryMethods((Constants.CARD_ENTRY_METHOD_MANUAL | Constants.CARD_ENTRY_METHOD_ICC_CONTACT | Constants.CARD_ENTRY_METHOD_NFC_CONTACTLESS));
+                    cordova.setActivityResultCallback(this);
+                    cloverGo450Connector.sale(request);
+                    // This is required to access device using bluetooth and accessing it's functionality
+                    if (paymentTypeSelection != null) {
+                        // Value of paymentTypeSelection is initialised only after initiating the sale 
+                        paymentTypeSelection.selectPaymentType(ICloverGoConnector.GoPaymentType.RP450, RP450);
+                    }
+                    // TODO Handle Sale response
+                    callbackContext.success(); // Thread-safe.
+                    
+                } else {
+                    callbackContext.error("SDK is not initialised");
+                }
+            } catch (JSONException e) {
+                sendExceptionCallback(e.toString(), true);
+            }
+
         }
+        
     }
     /**
     * The method connects to the available Clover Device

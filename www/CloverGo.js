@@ -7,13 +7,13 @@ CloverGo.prototype.init = function (configuration, successCallback, errorCallbac
     exec(successCallback, errorCallback, 'CloverGo', 'init', [configuration]);
 };
 
-CloverGo.prototype.connect = function (configuration, successCallback, errorCallback) {
-    exec(successCallback, errorCallback, 'CloverGo', 'connect', [configuration]);
+CloverGo.prototype.connect = function (successCallback, errorCallback) {
+    exec(successCallback, errorCallback, 'CloverGo', 'connect', []);
 };
 
 
-CloverGo.prototype.sale = function (configuration, successCallback, errorCallback) {
-    exec(successCallback, errorCallback, 'CloverGo', 'sale', [configuration]);
+CloverGo.prototype.sale = function (saleInfo, successCallback, errorCallback) {
+    exec(successCallback, errorCallback, 'CloverGo', 'sale', [saleInfo]);
 };
 
 if (typeof module != 'undefined' && module.exports) {

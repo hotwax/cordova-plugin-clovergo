@@ -27,9 +27,9 @@ Note: As the plugin is not yet registered, you need to clone the repository and 
 ## Methods
 
 
-- [KMswipe.init](#init)
-- [KMswipe.connect](#connect)
-- [KMswipe.sale](#sale)
+- [CloverGo.init](#init)
+- [CloverGo.connect](#connect)
+- [CloverGo.sale](#sale)
 
 
 ## init
@@ -38,7 +38,7 @@ Note: As the plugin is not yet registered, you need to clone the repository and 
 
 This method initialises the Clover Go SDK. It should call once while platform get ready and only once in per application lifecycle.
 
-### Types
+### Usage
 
 ```
 init(
@@ -54,7 +54,7 @@ init(
 
 This method connects to the available clover device.
 
-### Types
+### Usage
 
 ```
 connect(
@@ -70,7 +70,7 @@ connect(
 
 This method is reponsible to initiate a transaction via Clover Go device.
 
-### Types
+### Usage
 
 ```
 sale(

@@ -143,6 +143,9 @@ public class CloverGo extends CordovaPlugin {
         } if (action.equals("sale")) {
             this.sale(args.getJSONObject(0), callbackContext);
             return true;
+        } if (action.equals("disconnect")) {
+            this.disconnect(args, callbackContext);
+            return true;
         }
         return false;
     }
@@ -376,12 +379,37 @@ public class CloverGo extends CordovaPlugin {
             @Override
             public void onSaleResponse(final SaleResponse response) {
                 // TODO
-                if (response.isSuccess()) {
-                    com.clover.sdk.v3.payments.Payment payment = response.getPayment();
-                    showToast("Payment successfully processed");
-                } else {
-                    showToast("Payment failed");
+                try {
+                    if (response.isSuccess()) {
+                        com.clover.sdk.v3.payments.Payment payment = response.getPayment();
+                        // TODO Remove toast and handle on response handlers
+                        showToast("Payment successfully processed");
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_SUCCESSFUL");
+                        resObj.put("message", response.getMessage());
+                        resObj.put("paymentId", payment.getId());
+                        resObj.put("transactionType", payment.getCardTransaction().getType());
+                        resObj.put("entryType", payment.getCardTransaction().getEntryType());
+                        resObj.put("cardFirst6", payment.getCardTransaction().getFirst6());
+                        resObj.put("cardLast4", payment.getCardTransaction().getLast4());
+                        sendCallback(PluginResult.Status.OK, resObj, true);
+
+                    } else {
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_FAILED");
+                        resObj.put("message", response.getMessage());
+                        resObj.put("reason", response.getReason());
+                        sendCallback(PluginResult.Status.ERROR, resObj, true);
+                        showToast("Payment failed");
+                    }
+
+
+
+
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
                 }
+                
             }
 
             @Override
@@ -459,8 +487,6 @@ public class CloverGo extends CordovaPlugin {
                         // Value of paymentTypeSelection is initialised only after initiating the sale 
                         paymentTypeSelection.selectPaymentType(ICloverGoConnector.GoPaymentType.RP450, RP450);
                     }
-                    // TODO Handle Sale response
-                    callbackContext.success(); // Thread-safe.
                     
                 } else {
                     callbackContext.error("SDK is not initialised");
@@ -479,6 +505,15 @@ public class CloverGo extends CordovaPlugin {
         if (cloverGo450Connector != null && cloverDevice != null) {
             // TODO Handle case for multiple devices connected
             cloverGo450Connector.connectToBluetoothDevice(cloverDevice);
+        }
+    }
+    /**
+    * The method disconnects to the available Clover Device
+    */
+    private void disconnect(JSONArray args, CallbackContext callbackContext) {
+        if (cloverGo450Connector != null && cloverDevice != null) {
+            // TODO Check when no device connected
+            cloverGoConnector.disconnectDevice();
         }
     }
 

@@ -13,7 +13,7 @@
     </engines>
 
     <js-module name="CloverGo" src="www/CloverGo.js">
-        <clobbers target="CloverGo" />
+        <clobbers target="clovergo" />
     </js-module>
 
     <platform name="ios">

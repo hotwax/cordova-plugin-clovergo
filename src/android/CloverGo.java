@@ -382,8 +382,6 @@ public class CloverGo extends CordovaPlugin {
                 try {
                     if (response.isSuccess()) {
                         com.clover.sdk.v3.payments.Payment payment = response.getPayment();
-                        // TODO Remove toast and handle on response handlers
-                        showToast("Payment successfully processed");
                         JSONObject resObj = new JSONObject();
                         resObj.put("type", "PAYMENT_SUCCESSFUL");
                         resObj.put("message", response.getMessage());
@@ -400,12 +398,7 @@ public class CloverGo extends CordovaPlugin {
                         resObj.put("message", response.getMessage());
                         resObj.put("reason", response.getReason());
                         sendCallback(PluginResult.Status.ERROR, resObj, true);
-                        showToast("Payment failed");
                     }
-
-
-
-
                 } catch (JSONException e) {
                     sendExceptionCallback(e.toString(), true);
                 }

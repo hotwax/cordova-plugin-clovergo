@@ -3,10 +3,12 @@ package cordova.plugin.clovergo;
 import android.widget.Toast;
 import android.util.Log;
 import android.text.TextUtils;
+import android.Manifest;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PermissionHelper;
 import org.apache.cordova.PluginResult;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +83,18 @@ import static com.firstdata.clovergo.domain.model.ReaderInfo.ReaderType.RP450;
  */
 public class CloverGo extends CordovaPlugin {
 
+    private String [] permissions = {
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.GET_ACCOUNTS,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.ACCESS_WIFI_STATE,
+        Manifest.permission.INTERNET,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
     private CloverGoDeviceConfiguration.ENV goEnv;
     private ICloverConnector cloverConnector;
     private ICloverGoConnectorListener ccGoListener;
@@ -161,6 +175,9 @@ public class CloverGo extends CordovaPlugin {
     */
     private void init(JSONObject configObject, CallbackContext callbackContext) {
 
+        if(!hasPermisssion()) {
+            PermissionHelper.requestPermissions(this, 0, permissions);
+        }
         try {
             String environment = configObject.getString("environment");
 
@@ -504,10 +521,24 @@ public class CloverGo extends CordovaPlugin {
     * The method disconnects to the available Clover Device
     */
     private void disconnect(JSONArray args, CallbackContext callbackContext) {
-        if (cloverGo450Connector != null && cloverDevice != null) {
+        if (cloverGo450Connector != null) {
             // TODO Check when no device connected
-            cloverGoConnector.disconnectDevice();
+            cloverGo450Connector.disconnectDevice();
         }
+    }
+
+    /* Utility methods */
+
+    /**
+    * The method checks if there are all the permissions required for the Clover Go SDK
+    */
+    public boolean hasPermisssion() {
+        for(String permission : permissions) {
+            if(!PermissionHelper.hasPermission(this, permission)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void sendCallback(PluginResult.Status status, JSONObject obj, Boolean isKeepCallBack) {

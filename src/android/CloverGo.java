@@ -1,12 +1,14 @@
-package cordova.plugin.clovergo;
+package co.hotwax.clovergo;
 
 import android.widget.Toast;
 import android.util.Log;
 import android.text.TextUtils;
+import android.Manifest;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PermissionHelper;
 import org.apache.cordova.PluginResult;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +83,18 @@ import static com.firstdata.clovergo.domain.model.ReaderInfo.ReaderType.RP450;
  */
 public class CloverGo extends CordovaPlugin {
 
+    private String [] permissions = {
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.GET_ACCOUNTS,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.ACCESS_WIFI_STATE,
+        Manifest.permission.INTERNET,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
     private CloverGoDeviceConfiguration.ENV goEnv;
     private ICloverConnector cloverConnector;
     private ICloverGoConnectorListener ccGoListener;
@@ -141,7 +155,10 @@ public class CloverGo extends CordovaPlugin {
             this.connect(args, callbackContext);
             return true;
         } if (action.equals("sale")) {
-            this.sale(args, callbackContext);
+            this.sale(args.getJSONObject(0), callbackContext);
+            return true;
+        } if (action.equals("disconnect")) {
+            this.disconnect(args, callbackContext);
             return true;
         }
         return false;
@@ -158,6 +175,9 @@ public class CloverGo extends CordovaPlugin {
     */
     private void init(JSONObject configObject, CallbackContext callbackContext) {
 
+        if(!hasPermisssion()) {
+            PermissionHelper.requestPermissions(this, 0, permissions);
+        }
         try {
             String environment = configObject.getString("environment");
 
@@ -301,7 +321,16 @@ public class CloverGo extends CordovaPlugin {
 
             @Override
             public void onDeviceReady(final MerchantInfo merchantInfo) {
-                showToast("Clover Device Ready");
+                try {
+                    JSONObject resObj = new JSONObject();
+                    // TODO Remove it and handle at app level
+                    showToast("Clover Device Ready");
+                    resObj.put("type", "CLOVER_DEVICE_READY");
+                    resObj.put("message", "Clover Device Ready");
+                    sendCallback(PluginResult.Status.OK, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                }
             }
             @Override
             public void onAidMatch(final List<CardApplicationIdentifier> applicationIdentifiers, final AidSelection aidSelection) {}
@@ -354,17 +383,43 @@ public class CloverGo extends CordovaPlugin {
                         Log.d(TAG, "**CloverGo****************************************" + deviceErrorEvent.getMessage());
                         break;
                 }
+                try {
+                    JSONObject resObj = new JSONObject();
+                    resObj.put("type", deviceErrorEvent.getErrorType().name());
+                    resObj.put("message", deviceErrorEvent.getMessage());
+                    sendCallback(PluginResult.Status.ERROR, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                }
             }
 
             @Override
             public void onSaleResponse(final SaleResponse response) {
                 // TODO
-                if (response.isSuccess()) {
-                    com.clover.sdk.v3.payments.Payment payment = response.getPayment();
-                    showToast("Payment successfully processed");
-                } else {
-                    showToast("Payment failed");
+                try {
+                    if (response.isSuccess()) {
+                        com.clover.sdk.v3.payments.Payment payment = response.getPayment();
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_SUCCESSFUL");
+                        resObj.put("message", response.getMessage());
+                        resObj.put("paymentId", payment.getId());
+                        resObj.put("transactionType", payment.getCardTransaction().getType());
+                        resObj.put("entryType", payment.getCardTransaction().getEntryType());
+                        resObj.put("cardFirst6", payment.getCardTransaction().getFirst6());
+                        resObj.put("cardLast4", payment.getCardTransaction().getLast4());
+                        sendCallback(PluginResult.Status.OK, resObj, true);
+
+                    } else {
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_FAILED");
+                        resObj.put("message", response.getMessage());
+                        resObj.put("reason", response.getReason());
+                        sendCallback(PluginResult.Status.ERROR, resObj, true);
+                    }
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
                 }
+                
             }
 
             @Override
@@ -420,22 +475,38 @@ public class CloverGo extends CordovaPlugin {
     /**
     * The method initiates the sale
     */
-    private void sale(JSONArray args, CallbackContext callbackContext) {
-        if (cloverGo450Connector != null) {
-            // TODO Make it configurable
-            SaleRequest request = new SaleRequest(100L, "10000");
-            // This is required to identify the device, else when making the a sale gives reader not found error
-            request.setCardEntryMethods((Constants.CARD_ENTRY_METHOD_MANUAL | Constants.CARD_ENTRY_METHOD_ICC_CONTACT | Constants.CARD_ENTRY_METHOD_NFC_CONTACTLESS));
-            cordova.setActivityResultCallback(this);
-            cloverGo450Connector.sale(request);
-            // This is required to access device using bluetooth and accessing it's functionality
-            if (paymentTypeSelection != null) {
-                // Value of paymentTypeSelection is initialised only after initiating the sale 
-                paymentTypeSelection.selectPaymentType(ICloverGoConnector.GoPaymentType.RP450, RP450);
-            }
-            callbackContext.success(); // Thread-safe.
+    private void sale(JSONObject configObject, CallbackContext callbackContext) {
+        if (configObject.isNull("orderId") || configObject.isNull("amount")) {
+            callbackContext.error("orderId and amount is a required field for sale.");
+        } else {
+            try {    
+                String orderId = configObject.getString("orderId");
+                // TODO Handle if the parsing fails
+                long amount = Long.parseLong(configObject.getString("amount"));
             
+                // TODO Add all related fields to Sale Request
+                if (cloverGo450Connector != null) {
+                    // TODO Make it configurable
+                    SaleRequest request = new SaleRequest(amount, orderId);
+                    // This is required to identify the device, else when making the a sale gives reader not found error
+                    request.setCardEntryMethods((Constants.CARD_ENTRY_METHOD_MANUAL | Constants.CARD_ENTRY_METHOD_ICC_CONTACT | Constants.CARD_ENTRY_METHOD_NFC_CONTACTLESS));
+                    cordova.setActivityResultCallback(this);
+                    cloverGo450Connector.sale(request);
+                    // This is required to access device using bluetooth and accessing it's functionality
+                    if (paymentTypeSelection != null) {
+                        // Value of paymentTypeSelection is initialised only after initiating the sale 
+                        paymentTypeSelection.selectPaymentType(ICloverGoConnector.GoPaymentType.RP450, RP450);
+                    }
+                    
+                } else {
+                    callbackContext.error("SDK is not initialised");
+                }
+            } catch (JSONException e) {
+                sendExceptionCallback(e.toString(), true);
+            }
+
         }
+        
     }
     /**
     * The method connects to the available Clover Device
@@ -445,6 +516,29 @@ public class CloverGo extends CordovaPlugin {
             // TODO Handle case for multiple devices connected
             cloverGo450Connector.connectToBluetoothDevice(cloverDevice);
         }
+    }
+    /**
+    * The method disconnects to the available Clover Device
+    */
+    private void disconnect(JSONArray args, CallbackContext callbackContext) {
+        if (cloverGo450Connector != null) {
+            // TODO Check when no device connected
+            cloverGo450Connector.disconnectDevice();
+        }
+    }
+
+    /* Utility methods */
+
+    /**
+    * The method checks if there are all the permissions required for the Clover Go SDK
+    */
+    public boolean hasPermisssion() {
+        for(String permission : permissions) {
+            if(!PermissionHelper.hasPermission(this, permission)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void sendCallback(PluginResult.Status status, JSONObject obj, Boolean isKeepCallBack) {
@@ -456,248 +550,5 @@ public class CloverGo extends CordovaPlugin {
         PluginResult result = new PluginResult(PluginResult.Status.ERROR, errorMsg);
         result.setKeepCallback(isKeepCallBack);
         rootCallbackContext.sendPluginResult(result);
-    }
-}
-
-// TODO Use a separate file for it
-/**
- * Adapter that implements only the required methods
- */
-
-class GoConnectorListener implements ICloverGoConnectorListener {
-
-    @Override
-    public void onDeviceActivityStart(CloverDeviceEvent deviceEvent) {
-
-    }
-
-    @Override
-    public void onDeviceActivityEnd(CloverDeviceEvent deviceEvent) {
-
-    }
-
-    @Override
-    public void onDeviceError(CloverDeviceErrorEvent deviceErrorEvent) {
-
-    }
-
-    @Override
-    public void onPreAuthResponse(PreAuthResponse response) {
-
-    }
-
-    @Override
-    public void onAuthResponse(AuthResponse response) {
-
-    }
-
-    @Override
-    public void onTipAdjustAuthResponse(TipAdjustAuthResponse response) {
-
-    }
-
-    @Override
-    public void onCapturePreAuthResponse(CapturePreAuthResponse response) {
-
-    }
-
-    @Override
-    public void onVerifySignatureRequest(VerifySignatureRequest request) {
-
-    }
-
-    @Override
-    public void onConfirmPaymentRequest(ConfirmPaymentRequest request) {
-
-    }
-
-    @Override
-    public void onCloseoutResponse(CloseoutResponse response) {
-
-    }
-
-    @Override
-    public void onSaleResponse(SaleResponse response) {
-
-    }
-
-    @Override
-    public void onManualRefundResponse(ManualRefundResponse response) {
-
-    }
-
-    @Override
-    public void onRefundPaymentResponse(RefundPaymentResponse response) {
-
-    }
-
-    @Override
-    public void onTipAdded(TipAddedMessage message) {
-
-    }
-
-    @Override
-    public void onVoidPaymentResponse(VoidPaymentResponse response) {
-
-    }
-
-    @Override
-    public void onDeviceDisconnected() {
-
-    }
-
-    @Override
-    public void onDeviceConnected() {
-
-    }
-
-    @Override
-    public void onDeviceReady(MerchantInfo merchantInfo) {
-
-    }
-
-    @Override
-    public void onVaultCardResponse(VaultCardResponse response) {
-
-    }
-
-    @Override
-    public void onPrintJobStatusResponse(PrintJobStatusResponse response) {
-
-    }
-
-    @Override
-    public void onRetrievePrintersResponse(RetrievePrintersResponse response) {
-
-    }
-
-    @Override
-    public void onPrintManualRefundReceipt(PrintManualRefundReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onPrintManualRefundDeclineReceipt(PrintManualRefundDeclineReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onPrintPaymentReceipt(PrintPaymentReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onPrintPaymentDeclineReceipt(PrintPaymentDeclineReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onPrintPaymentMerchantCopyReceipt(PrintPaymentMerchantCopyReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onPrintRefundPaymentReceipt(PrintRefundPaymentReceiptMessage message) {
-
-    }
-
-    @Override
-    public void onRetrievePendingPaymentsResponse(RetrievePendingPaymentsResponse response) {
-
-    }
-
-    @Override
-    public void onReadCardDataResponse(ReadCardDataResponse response) {
-
-    }
-
-    @Override
-    public void onMessageFromActivity(MessageFromActivity message) {
-
-    }
-
-    @Override
-    public void onCustomActivityResponse(CustomActivityResponse response) {
-
-    }
-
-    @Override
-    public void onRetrieveDeviceStatusResponse(RetrieveDeviceStatusResponse response) {
-
-    }
-
-    @Override
-    public void onResetDeviceResponse(ResetDeviceResponse response) {
-
-    }
-
-    @Override
-    public void onRetrievePaymentResponse(RetrievePaymentResponse response) {
-
-    }
-
-    @Override
-    public void onDeviceDiscovered(ReaderInfo readerInfo) {
-
-    }
-
-    @Override
-    public void onDeviceDisconnected(ReaderInfo readerInfo) {
-
-    }
-
-    @Override
-    public void onAidMatch(List<CardApplicationIdentifier> applicationIdentifierList, AidSelection aidSelection) {
-
-    }
-
-    @Override
-    public void onPaymentTypeRequired(int cardEntryMethods, List<ReaderInfo> connectedReaders, PaymentTypeSelection paymentTypeSelection) {
-
-    }
-
-    @Override
-    public void onManualCardEntryRequired(CloverGoConstants.TransactionType transactionType, BaseRequest baseRequest, ICloverGoConnector.GoPaymentType goPaymentType, ReaderInfo.ReaderType readerType, boolean allowDuplicate, ManualCardEntry manualCardEntry) {
-
-    }
-
-    @Override
-    public void notifyOnProgressDialog(String title, String message, boolean isCancelable) {
-
-    }
-
-    @Override
-    public void onCloverGoDeviceActivity(CloverDeviceEvent deviceEvent) {
-
-    }
-
-    @Override
-    public void onGetMerchantInfo() {
-
-    }
-
-    @Override
-    public void onGetMerchantInfoResponse(MerchantInfo merchantInfo) {
-
-    }
-
-    @Override
-    public void onSignatureRequired(Payment payment, SignatureCapture signatureCapture) {
-
-    }
-
-    @Override
-    public void onSendReceipt(Order order, SendReceipt sendReceipt) {
-
-    }
-
-    @Override
-    public void onDisplayMessage(String message) {
-
-    }
-
-    @Override
-    public void onVoidPayment(Payment payment, String reason) {
-
     }
 }

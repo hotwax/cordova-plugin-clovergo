@@ -46,7 +46,8 @@
 
         <lib-file src="src/android/roam/roamreaderunifiedapi-1.7.1.162.aar"/>
         <framework src="src/android/build-extras.gradle" custom="true" type="gradleReference" />
-        <source-file src="src/android/CloverGo.java" target-dir="src/cordova/plugin/clovergo/CloverGo" />
+        <source-file src="src/android/CloverGo.java" target-dir="src/co/hotwax/clovergo/CloverGo" />
+        <source-file src="src/android/GoConnectorListener.java" target-dir="src/co/hotwax/clovergo/GoConnectorListener" />
     </platform>
 
 </plugin>

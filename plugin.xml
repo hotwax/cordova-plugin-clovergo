@@ -28,7 +28,7 @@
     <platform name="android">
         <config-file parent="/*" target="res/xml/config.xml">
             <feature name="CloverGo">
-                <param name="android-package" value="cordova.plugin.clovergo.CloverGo" />
+                <param name="android-package" value="co.hotwax.clovergo.CloverGo" />
             </feature>
         </config-file>
 

@@ -178,6 +178,7 @@ public class CloverGo extends CordovaPlugin {
         if(!hasPermisssion()) {
             PermissionHelper.requestPermissions(this, 0, permissions);
         }
+
         try {
             String environment = configObject.getString("environment");
 
@@ -232,51 +233,47 @@ public class CloverGo extends CordovaPlugin {
 
             @Override
             public void onDeviceDisconnected(ReaderInfo readerInfo) {
-                showToast("Disconnected");
+                // TODO
             }
 
             @Override
             public void onDeviceConnected() {
-                showToast("Connecting...");
+                // TODO
             }
 
             @Override
             public void onCloverGoDeviceActivity(final CloverDeviceEvent deviceEvent) {
+                String messageType = "TOAST";
+                // TODO
                 switch (deviceEvent.getEventState()) {
-                    case CARD_SWIPED:
-                        showProgressDialog("Card Swiped", deviceEvent.getMessage(), false);
+                    case CARD_SWIPED: // Card Swiped
+                    case CARD_TAPPED: // Contactless Payment Started
+                    case EMV_COMPLETE: // EMV Transaction Completed
+                    case CARD_INSERTED: // Card Inserted
+                    case UPDATE_STARTED: // Reader Update
+                        messageType =  "PROGRESS";
                         break;
-                    case CARD_TAPPED:
-                        showProgressDialog("Contactless Payment Started", deviceEvent.getMessage(), false);
-                        break;
-                    case EMV_COMPLETE:
-                        showProgressDialog("EMV Transaction Completed", deviceEvent.getMessage(), false);
-                        break;
-                    case CARD_INSERTED:
-                        showProgressDialog("Card Inserted", deviceEvent.getMessage(), false);
-                        break;
-                    case UPDATE_STARTED:
-                        showProgressDialog("Reader Update", deviceEvent.getMessage(), false);
-                        break;
-                    case UPDATE_COMPLETED:
-                        showAlertDialog("Reader Update", "Please disconnect and reconnect your reader.");
+                    case UPDATE_COMPLETED: // Reader Update", "Please disconnect and reconnect your reader.
+                    case READ_CARD_DATA_COMPLETED: // CARD DATA
+                        messageType =  "ALERT";
                         break;
                     case CANCEL_CARD_READ:
-                        showToast(deviceEvent.getMessage());
-                        break;
                     case CARD_REMOVED:
-                        showToast(deviceEvent.getMessage());
-                        break;
                     case PLEASE_SEE_PHONE_MSG:
-                        showToast(deviceEvent.getMessage());
-                        break;
                     case READER_READY:
-                        showToast(deviceEvent.getMessage());
-                        break;
-                    case READ_CARD_DATA_COMPLETED:
-                        showAlertDialog("CARD DATA ", deviceEvent.getMessage());
+                        messageType =  "TOAST";
                         break;
                 }
+                // TODO Use observable and uncomment this code
+                /* try {
+                    JSONObject resObj = new JSONObject();
+                    resObj.put("type", deviceEvent.getEventState());
+                    resObj.put("message", deviceEvent.getMessage() != null ? deviceEvent.getMessage() : "");
+                    resObj.put("messageType", messageType);
+                    sendCallback(PluginResult.Status.OK, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                } */
             }
 
             @Override
@@ -289,7 +286,6 @@ public class CloverGo extends CordovaPlugin {
                 try {
                     if (merchantInfo != null) {
                         JSONObject resObj = new JSONObject();
-                        showToast("Clover SDK initialised");
                         resObj.put("type", "CLOVER_SDK_INITIALISED");
                         resObj.put("message", "Clover SDK initialised");
                         resObj.put("merchantName", merchantInfo.getMerchantName());
@@ -299,7 +295,6 @@ public class CloverGo extends CordovaPlugin {
                         resObj.put("type", "CLOVER_SDK_INITIALIZE_FAILED");
                         resObj.put("message", "Could not initialize the SDK. Please try again later.");
                         sendCallback(PluginResult.Status.ERROR, resObj, true);
-                        showToast("Could not initialize the SDK. Please try again later.");
                     }
                 } catch (JSONException e) {
                     sendExceptionCallback(e.toString(), true);
@@ -323,8 +318,6 @@ public class CloverGo extends CordovaPlugin {
             public void onDeviceReady(final MerchantInfo merchantInfo) {
                 try {
                     JSONObject resObj = new JSONObject();
-                    // TODO Remove it and handle at app level
-                    showToast("Clover Device Ready");
                     resObj.put("type", "CLOVER_DEVICE_READY");
                     resObj.put("message", "Clover Device Ready");
                     sendCallback(PluginResult.Status.OK, resObj, true);
@@ -366,7 +359,6 @@ public class CloverGo extends CordovaPlugin {
                     case LOW_BATTERY:
                     case PARTIAL_AUTH_REJECTED:
                     case DUPLICATE_TRANSACTION_REJECTED:
-                        showToast(deviceErrorEvent.getErrorType().name().replace('_', ' '));
                         Log.d(TAG, "**CloverGo****************************************" + deviceErrorEvent.getMessage());
                         break;
                     case MULTIPLE_CONTACT_LESS_CARD_DETECTED_ERROR:
@@ -375,11 +367,9 @@ public class CloverGo extends CordovaPlugin {
                     case DIP_FAILED_ALL_ATTEMPTS_ERROR:
                     case DIP_FAILED_ERROR:
                     case SWIPE_FAILED_ERROR:
-                        showToast(deviceErrorEvent.getErrorType().name().replace('_', ' '));
                         Log.d(TAG, "**CloverGo****************************************" + deviceErrorEvent.getMessage());
                         break;
                     default:
-                        showToast(deviceErrorEvent.getErrorType().name());
                         Log.d(TAG, "**CloverGo****************************************" + deviceErrorEvent.getMessage());
                         break;
                 }
@@ -401,7 +391,7 @@ public class CloverGo extends CordovaPlugin {
                         com.clover.sdk.v3.payments.Payment payment = response.getPayment();
                         JSONObject resObj = new JSONObject();
                         resObj.put("type", "PAYMENT_SUCCESSFUL");
-                        resObj.put("message", response.getMessage());
+                        resObj.put("message", response.getMessage() != null ? response.getMessage() : "Sale successfully processed");
                         resObj.put("paymentId", payment.getId());
                         resObj.put("transactionType", payment.getCardTransaction().getType());
                         resObj.put("entryType", payment.getCardTransaction().getEntryType());
@@ -461,7 +451,6 @@ public class CloverGo extends CordovaPlugin {
             @Override
             public void onRetrievePaymentResponse(RetrievePaymentResponse response) {}
         };
-
 
         // TODO Make credentials configurable
         if (ccGoListener != null) {

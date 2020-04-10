@@ -1,14 +1,18 @@
 # Cordova/Ionic CloverGo plugin
 Cordova/Ionic plugin for using Clover Remote Pay Go SDKs for Android & iOS. It communicates with Clover Go  device via bluetooth.  
 
-Based upon [ Android ](https://github.com/clover/remote-pay-android-go) and [ iOS ](https://github.com/clover/remote-pay-android-go) POS integration. Pleae refer these integration links to know how to generate the configuration credentials.
+Based upon [ Android ](https://github.com/clover/remote-pay-android-go) and [ iOS ](https://github.com/clover/remote-pay-android-go) POS integration. Please refer these integration links to know how to generate the configuration credentials.
 
 ## Platform Support
 * android
 
+## Package links
+* [ NPM ](https://www.npmjs.com/package/cordova-plugin-clovergo)
+
+
 # Usage
 
-## How to add plugin
+## How to add plugin?
 Type following command from CLI to add this plugin
 
 ```
@@ -20,16 +24,30 @@ Type following command from CLI to add this plugin
     ionic cordova plugin add cordova-plugin-clovergo
 ```
 
-The plugin creates the object `CloverGo` into DOM.
+The plugin creates the global object `clovergo`.
 
-Note: As the plugin is not yet registered, you need to clone the repository and replace `cordova-plugin-clovergo` with the path of repository folder.
+## How to use?
+
+### Ionic 3
+
+```
+    import { Component } from '@angular/core';
+    ...
+    declare var clovergo: any;
+    ...
+
+    clovergo.init(cloverGoConfig, successCallback, errorCallback);
+
+```
+
+
 
 ## Methods
 
 
-- [CloverGo.init](#init)
-- [CloverGo.connect](#connect)
-- [CloverGo.sale](#sale)
+- [clovergo.init](#init)
+- [clovergo.connect](#connect)
+- [clovergo.sale](#sale)
 
 
 ## init

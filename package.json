@@ -11,13 +11,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.hotwax.co/plugins/mobile-sdk/ionic/clover-go.git"
+    "url": "https://github.com/hotwax/cordova-plugin-clovergo.git"
   },
   "keywords": [
     "ecosystem:cordova",
     "cordova-ios",
     "cordova-android"
   ],
-  "author": "",
+  "author": "Hotwax Commerce",
   "license": "Apache 2.0"
 }

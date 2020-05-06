@@ -10,6 +10,9 @@ var clovergo = {
     sale: function (saleInfo, successCallback, errorCallback) {
         exec(successCallback, errorCallback, 'CloverGo', 'sale', [saleInfo]);
     },
+    sign: function (signInfo, successCallback, errorCallback) {
+        exec(successCallback, errorCallback, 'CloverGo', 'sign', [signInfo]);
+    },
     disconnect: function (successCallback, errorCallback) {
         exec(successCallback, errorCallback, 'CloverGo', 'disconnect', []);
     }

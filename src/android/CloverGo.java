@@ -76,10 +76,7 @@ import com.firstdata.clovergo.domain.model.Order;
 import com.firstdata.clovergo.domain.model.Payment;
 import com.firstdata.clovergo.domain.model.ReaderInfo;
 
-
 import static com.firstdata.clovergo.domain.model.ReaderInfo.ReaderType.RP450;
-import com.clover.sdk.v3.order.PayType;
-import static com.clover.sdk.v3.order.PayType.FULL;
 
 /**
  * The class perform payment operations with Clover Go device

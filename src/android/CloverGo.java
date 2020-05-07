@@ -71,6 +71,7 @@ import com.clover.remote.client.messages.VaultCardResponse;
 import com.clover.remote.client.messages.VerifySignatureRequest;
 import com.clover.remote.client.messages.VoidPaymentResponse;
 import com.clover.remote.message.TipAddedMessage;
+import com.clover.sdk.v3.order.VoidReason;
 
 import com.firstdata.clovergo.domain.model.Order;
 import com.firstdata.clovergo.domain.model.Payment;
@@ -161,6 +162,9 @@ public class CloverGo extends CordovaPlugin {
             return true;
         }  if (action.equals("sign")) {
             this.sign(args.getJSONObject(0), callbackContext);
+            return true;
+        }  if (action.equals("voidPayment")) {
+            this.voidPayment(args.getJSONObject(0), callbackContext);
             return true;
         } if (action.equals("disconnect")) {
             this.disconnect(args, callbackContext);
@@ -472,7 +476,27 @@ public class CloverGo extends CordovaPlugin {
             public void onTipAdded(TipAddedMessage message) {}
 
             @Override
-            public void onVoidPaymentResponse(VoidPaymentResponse response) {}
+            public void onVoidPaymentResponse(VoidPaymentResponse response) {
+                // TODO
+                try {
+                    if (response.isSuccess()) {
+                        com.clover.sdk.v3.payments.Payment payment = response.getPayment();
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_VOID_SUCCESSFUL");
+                        resObj.put("message", response.getMessage() != null ? response.getMessage() : "Payment successfully voided");
+                        if (payment != null) resObj.put("paymentId", payment.getId());
+                        sendCallback(PluginResult.Status.OK, resObj, true);
+                    } else {
+                        JSONObject resObj = new JSONObject();
+                        resObj.put("type", "PAYMENT_VOID_FAILED");
+                        resObj.put("message", response.getMessage());
+                        resObj.put("reason", response.getReason() != null ? response.getReason() : "");
+                        sendCallback(PluginResult.Status.ERROR, resObj, true);
+                    }
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                }
+            }
 
             @Override
             public void onManualRefundResponse(final ManualRefundResponse response) {}
@@ -556,6 +580,29 @@ public class CloverGo extends CordovaPlugin {
                 }
                 // TODO For paymentId, it can also be passed as parameter
                 signatureCaptureListener.captureSignature(curentPayment.getPaymentId(), signature);
+            }
+        } catch (JSONException e) {
+            sendExceptionCallback(e.toString(), true);
+        }
+
+    }
+    /**
+    * The method voids the payment
+    */
+    private void voidPayment(JSONObject paymentObject, CallbackContext callbackContext) {
+        try {
+            if (paymentObject.isNull("paymentId") || paymentObject.isNull("orderId")) {
+                callbackContext.error("paymentId and orderId are the required field.");
+            } else {
+                VoidPaymentRequest request = new VoidPaymentRequest();
+                request.setPaymentId(paymentObject.getString("paymentId"));
+                request.setOrderId(paymentObject.getString("orderId"));
+                request.setVoidReason(VoidReason.USER_CANCEL.name());
+                request.setDisablePrinting(false);
+                request.setDisableReceiptSelection(false);
+                if (cloverGo450Connector != null) {
+                    cloverGo450Connector.voidPayment(request);
+                }
             }
         } catch (JSONException e) {
             sendExceptionCallback(e.toString(), true);

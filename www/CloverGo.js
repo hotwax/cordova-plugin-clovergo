@@ -13,6 +13,9 @@ var clovergo = {
     sign: function (signInfo, successCallback, errorCallback) {
         exec(successCallback, errorCallback, 'CloverGo', 'sign', [signInfo]);
     },
+    voidPayment: function (paymentInfo, successCallback, errorCallback) {
+        exec(successCallback, errorCallback, 'CloverGo', 'voidPayment', [paymentInfo]);
+    },
     disconnect: function (successCallback, errorCallback) {
         exec(successCallback, errorCallback, 'CloverGo', 'disconnect', []);
     }

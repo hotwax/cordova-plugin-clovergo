@@ -263,6 +263,14 @@ public class CloverGo extends CordovaPlugin {
             @Override
             public void onDeviceDisconnected(ReaderInfo readerInfo) {
                 // TODO
+                try {
+                    JSONObject resObj = new JSONObject();
+                    resObj.put("type", "CLOVER_DEVICE_DISCONNECTED");
+                    resObj.put("message", "Clover Device Disconnected");
+                    sendCallback(PluginResult.Status.OK, resObj, true);
+                } catch (JSONException e) {
+                    sendExceptionCallback(e.toString(), true);
+                }
             }
 
             @Override
@@ -345,7 +353,7 @@ public class CloverGo extends CordovaPlugin {
 
             @Override
             public void onDeviceReady(final MerchantInfo merchantInfo) {
-                try {
+                try { 
                     JSONObject resObj = new JSONObject();
                     resObj.put("type", "CLOVER_DEVICE_READY");
                     resObj.put("message", "Clover Device Ready");
@@ -563,6 +571,15 @@ public class CloverGo extends CordovaPlugin {
         if (cloverGo450Connector != null && cloverDevice != null) {
             // TODO Handle case for multiple devices connected
             cloverGo450Connector.connectToBluetoothDevice(cloverDevice);
+        } else {
+            try {  
+                JSONObject resObj = new JSONObject();
+                resObj.put("type", "CLOVER_DEVICE_NOT_FOUND");
+                resObj.put("message", "Clover Device Not Found");
+                sendCallback(PluginResult.Status.ERROR, resObj, true);
+            } catch (JSONException e) {
+                sendExceptionCallback(e.toString(), true);
+            }
         }
     }
     /**

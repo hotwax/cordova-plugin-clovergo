@@ -48,6 +48,9 @@ The plugin creates the global object `clovergo`.
 - [clovergo.init](#init)
 - [clovergo.connect](#connect)
 - [clovergo.sale](#sale)
+- [clovergo.sign](#sign)
+- [clovergo.voidPayment](#voidPayment)
+- [clovergo.disconnect](#disconnect)
 
 
 ## init
@@ -76,7 +79,6 @@ This method connects to the available clover device.
 
 ```
 connect(
-    configuration: {},
     callbackSuccess: (res: any) => void,
     callbackError: (err: any) => void
     ): void;
@@ -97,7 +99,52 @@ sale(
     callbackError: (err: any) => void
     ): void;
 ```
+## sign
 
+### Description
+
+This method is used to pass signature as two dimensional number array that represents points of signature on screen. The list is passed as signature in SignInfo object.
+
+### Usage
+
+```
+sign(
+    SignInfo: SignInfo,
+    callbackSuccess: (res: any) => void,
+    callbackError: (err: any) => void
+    ): void;
+```
+
+## voidPayment
+
+### Description
+
+This method is used to void specific payment. Payment info should be passed paymentId and orderId generated from the Clover API
+
+### Usage
+
+```
+voidPayment(
+    paymentInfo: PaymentInfo,
+    callbackSuccess: (res: any) => void,
+    callbackError: (err: any) => void
+    ): void;
+```
+
+## disconnect
+
+### Description
+
+This method disconnects to the connected clover device.
+
+### Usage
+
+```
+disconnect(
+    callbackSuccess: (res: any) => void,
+    callbackError: (err: any) => void
+    ): void;
+```
 
 ## Contributing
 Pull requests are most welcomed.  

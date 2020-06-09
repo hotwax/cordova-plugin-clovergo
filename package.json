@@ -16,7 +16,11 @@
   "keywords": [
     "ecosystem:cordova",
     "cordova-ios",
-    "cordova-android"
+    "cordova-android",
+    "clover",
+    "clover-go",
+    "clovergo",
+    "payment"
   ],
   "author": "Hotwax Commerce",
   "license": "Apache 2.0"
